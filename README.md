@@ -1,0 +1,15 @@
+# 캠페이너스 이전
+
+```
+현재 지원 CMS
+- xe1
+
+$ cd migrate-to-campainus
+$ yarn
+$ node . 2> "build/$(date +%s)/error.log > build/$(date +%s)/output.log"
+```
+
+## 이전 데이터 형식
+
+- 회원: <https://docs.google.com/spreadsheets/d/1GgWdrKOp_Pr0DRwCOJpG2tOzBDt8PV56/edit#gid=363256712>
+- 게시판: <https://docs.google.com/spreadsheets/d/1GgqFyNHKsP7jPt1_S9HaLleifQrKdO3k/edit#gid=1438105002>

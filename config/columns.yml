@@ -1,0 +1,80 @@
+users:
+- header: 'E-mail'
+  key: 'E-mail'
+  width: 10
+- header: 'ID'
+  key: 'ID'
+  width: 10
+- header: '비밀번호'
+  key: '비밀번호'
+  width: 10
+- header: '이름'
+  key: '이름'
+  width: 10
+- header: '회원그룹'
+  key: '회원그룹'
+  width: 10
+- header: '회원등급'
+  key: '회원등급'
+  width: 10
+- header: '성별'
+  key: '성별'
+  width: 10
+- header: '연락처'
+  key: '연락처'
+  width: 10
+- header: '홈페이지'
+  key: '홈페이지'
+  width: 10
+- header: '우편번호'
+  key: '우편번호'
+  width: 10
+- header: '주소'
+  key: '주소'
+  width: 10
+- header: '상세주소'
+  key: '상세주소'
+  width: 10
+# 생년월일 YYYY-MM-DD 형식으로 입력해 주세요. (예: 1980-5-25) 셀 서식이 반드시 "날짜"여야 합니다.
+- header: '생년월일'
+  key: '생년월일'
+  width: 10
+  style:
+    numFmt: 'yyyy-mm-dd'
+- header: '포인트'
+  key: '포인트'
+  width: 10
+
+boards:
+- header: '카테고리ID'
+  key: '카테고리ID'
+  width: 10
+- header: '제목'
+  key: '제목'
+  width: 10
+- header: '내용'
+  key: '내용'
+  width: 10
+- header: '작성자'
+  key: '작성자'
+  width: 10
+- header: '작성시간'
+  key: '작성시간'
+  width: 10
+  style:
+    numFmt: 'yyyy-mm-dd hh:mm:ss'
+- header: '조회수'
+  key: '조회수'
+  width: 10
+- header: '좋아요수'
+  key: '좋아요수'
+  width: 10
+- header: '공지여부'
+  key: '공지여부'
+  width: 10
+- header: '비밀글'
+  key: '비밀글'
+  width: 10
+- header: '비밀번호'
+  key: '비밀번호'
+  width: 10

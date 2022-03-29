@@ -1,0 +1,12 @@
+prefix:
+- '\./'
+- 'http://www.npcn.or.kr/'
+- 'http://npcn.or.kr/'
+
+patterns:
+- search: [\W_]
+  replace: 
+- search: '/zero/data/newsletter/1173853621/'
+  replace: '/zero/data/newsletter'
+- search: '/zero/data/newsletter/c23_복사.jpg'
+  replace: '/zero/data/newsletter/c23.jpg'

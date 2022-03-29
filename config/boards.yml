@@ -1,0 +1,39 @@
+# key 캠페이너스 게시판 => {{ label }}.xlsx
+# value: 소스 게시판 src.xe_modules.mid
+
+budgets:
+  label: 재정보고
+  src:
+  - budget: 7C3K3P68tK
+
+notices:
+  label: 공지사항
+  src:
+  - notice
+
+activities:
+  label: 활동소식 
+  src:
+  - work
+  - together
+  - midea
+
+press:
+  label: 성명보도자료 
+  src:
+  - statement
+
+campaigns:
+  label: 캠페인 
+  src:
+  - member
+  - gathering
+  - nationalpark
+  - hanbaek
+
+archives:
+  label: 자료실 
+  src:
+  - papers
+  - archive
+  - magazine

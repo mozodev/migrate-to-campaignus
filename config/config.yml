@@ -1,0 +1,14 @@
+source:
+  db:
+    type: mysql
+    host: 10.148.130.62
+    database: npcn
+    user: vagrant
+    password: vagrant
+    dateStrings: true
+  adapter: xe1
+  webroot: /campaignus/npcn/backup/www/
+
+destination:
+  build: ./build
+  site_code: S20220207c3651e5414a9f
