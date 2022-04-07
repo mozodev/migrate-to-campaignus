@@ -1,4 +1,4 @@
--- member.sql 회원
+-- members.sql 회원
 SELECT
     m.`email_address` AS "E-mail",
     m.`user_id` AS "ID",

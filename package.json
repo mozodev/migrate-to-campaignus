@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "description": "migration to campainus",
   "main": "bin/index.js",
-  "bin": { "migrate2cpn": "./bin/index.js" },
+  "bin": {
+    "migrate2campaignus": "./bin/index.js"
+  },
   "author": "yeongtaek, Hong<mozodev@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
+    "commander": "^9.1.0",
     "crypto-js": "^4.1.1",
     "ejs": "^3.1.6",
     "exceljs": "^4.3.0",

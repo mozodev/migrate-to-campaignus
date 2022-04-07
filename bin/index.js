@@ -6,19 +6,41 @@ const { exit } = require('process');
 const ejs = require('ejs');
 const HTMLParser = require('node-html-parser');
 const path = require('path');
+const { dirname } = require('path');
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
 const MD5 = require("crypto-js/md5");
+const { Command } = require('commander');
+
+global.appRoot = dirname(dirname(require.main.filename));
+let migration = '';
+const program = new Command();
+program
+  .name('migrate2campaignus')
+  .description('migrate to campaignus CLI')
+  .version('0.1.0')
+  .argument('<filename>', 'filename.yml')
+  .action(filename => migration = filename)
+  .parse();
 
 // 설정
-let { config, columns, boards, images } = getConfig();
-let webRoot = config.source.webroot;
-let imagePrefix = images['prefix'];
-let patterns = images.patterns;
+const adapters = ['campaignus', 'xe1', 'wp'];
+const campaignus = getAdapterConfig('campaignus');
+const { source, images, boards, destination } = getMigrationConfig(migration);
+const webRoot = source.webroot;
+const siteCode = destination.siteCode;
+const buildPath = `${destination['build']}/${Date.now()}`;
+const db = mysql.createConnection(source.db);
 
-function getConfig() {
+/**
+ * Get config of specific adapter.
+ * @param {string} adapter 
+ * @returns configs
+ */
+function getAdapterConfig(adapter) {
   let configs = {};
-  const configDir = `${process.cwd()}/config/`;
+  if (!adapters.includes(adapter)) return configs;
+  const configDir = `${process.cwd()}/adapters/${adapter}`;
   fs.readdirSync(configDir).forEach(file => {
     if (path.parse(file).ext == '.yml' | path.parse(file).ext == 'yaml') {
       configs[path.parse(file).name] = yaml.load(fs.readFileSync(`${configDir}/${file}`, 'utf8'));
@@ -26,14 +48,26 @@ function getConfig() {
   });
   return configs;
 }
-let siteCode = config.destination['site_code'];
-let buildPath = `${config.destination['build']}/${Date.now()}`;
+
+/**
+ * Get migration config.
+ * @param {string} filename 
+ * @returns configs
+ */
+function getMigrationConfig(filename) {
+  let config = {};
+  const filePath = `${process.cwd()}/${filename}.yml`;
+  if (fs.existsSync(filePath)) {
+    config = yaml.load(fs.readFileSync(filePath, 'utf8'));
+  }
+  return config;
+}
+
 if (!fs.existsSync(`${buildPath}/${siteCode}`)){
   fs.mkdirSync(`${buildPath}/${siteCode}`, {recursive: true});
   fs.writeFile(`${buildPath}/output.log`, '', err => console.error);
   fs.writeFile(`${buildPath}/error.log`, '', err => console.error);
 }
-
 // log stdout, stderr.
 process.stdout.write = function(str, encoding, fg) {
   fs.appendFile(`${buildPath}/output.log`, str, function(err) {});
@@ -43,7 +77,7 @@ process.stderr.write = function(str, encoding, fg) {
 }
 
 function getQuery(adapter, name, data = {}) {
-  let path = `${process.cwd()}/adapters/${adapter}/${name}.sql`;
+  let path = `${appRoot}/adapters/${adapter}/${name}.sql`;
   if (template = fs.readFileSync(path).toString()) {
     return ejs.render(template, data);
   }
@@ -73,13 +107,13 @@ function processContentURL(str) {
         if (!url.host.includes('npcn.or.kr')) {
           let client = (url.protocol == "https:") ? https : http;
           let ext = path.extname(src);
-          filename = `${Date.now()}${ext}`;
+          filename = `${MD5(src)}.${ext}`;
           const req = client.get(url, (res) => {
             if (res.statusCode == '200' && ext != 'html') {
               contentType = res.headers['content-type'] ? res.headers['content-type'].split('/') : '';
               if (!ext && contentType) {
-                ext = '.' + contentType[contentType.length - 1];
-                filename = `${Date.now()}${ext}`;
+                ext = contentType[contentType.length - 1];
+                filename = `${MD5(src)}.${ext}`;
               }
               res.pipe(fs.createWriteStream(`${targetDir}/${filename}`));
             } else {
@@ -103,9 +137,9 @@ function processContentURL(str) {
         }
       } finally {
         // 본문 이미지 경로 치환
-        if (filename) {
+        if (filename && images.patterns.legnth > 0) {
           replaced = replaced.replace(src, `${targetPrefix}/${filename}`);
-          patterns.forEach(pattern => replaced = replaced.replace(pattern.search, pattern.replace));
+          images.patterns.forEach(pattern => replaced = replaced.replace(pattern.search, pattern.replace));
         }
       }
     });
@@ -120,7 +154,7 @@ function copyImageFiles(src, dst) {
   });
 }
 function fixPath(src) {
-  let re = new RegExp(imagePrefix.join("|"),"gi");
+  let re = new RegExp(images.prefix.join("|"),"gi");
   // files/attach/images/10210/248/063/8116281b4c7f6bcee48db2372209914a.jpg
   if (src.startsWith('files/attach/images')) src = './' + src;
   return src.replace(re, webRoot);
@@ -140,21 +174,21 @@ function fixFilename(src) {
   return filename;
 }
 
-const db = mysql.createConnection(config.source.db);
 db.connect(err => {
   if (err) throw err;
-  // 1. USERS
-  db.query(getQuery('xe1', 'users'), (err, results) => {
+
+  // 1. members
+  db.query(getQuery('xe1', 'members'), (err, results) => {
     if (err) console.log(err) && exit;
-    const users = JSON.parse(JSON.stringify(results));
-    if (users) console.log(`1. 회원 -- ${users.length}`);
+    const members = JSON.parse(JSON.stringify(results));
+    if (members) console.log(`1. 회원 -- ${members.length}`);
     let workbook = new excel.Workbook();
     let worksheet = workbook.addWorksheet('회원');
-    worksheet.columns = columns.users;
-    worksheet.addRows(users);
-    workbook.xlsx.writeFile(`${buildPath}/users.xlsx`)
+    worksheet.columns = campaignus.member;
+    worksheet.addRows(members);
+    workbook.xlsx.writeFile(`${buildPath}/회원.xlsx`)
       .then(function() {
-        console.log("exported to users.xlsx");
+        console.log("exported to 회원.xlsx");
       });
   });
 
@@ -176,11 +210,11 @@ db.connect(err => {
       if (err) console.log(err) && exit;
       let label = boards[board].label
       const posts = JSON.parse(JSON.stringify(results));
-      posts.map(post => post['내용'] = processContentURL(post['내용']));
+      posts.map(post => post['내용(HTML)'] = processContentURL(post['내용(HTML)']));
       if (posts && data.mids) console.log(`2. 게시판: ${label} (${data.mids}) -- ${posts.length}`);
       let workbook = new excel.Workbook();
       let worksheet = workbook.addWorksheet(label);
-      worksheet.columns = columns.boards;
+      worksheet.columns = campaignus.board;
       worksheet.addRows(posts);
       workbook.xlsx.writeFile(`${buildPath}/${label}.xlsx`)
         .then(function() {

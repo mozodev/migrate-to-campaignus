@@ -53,12 +53,12 @@ boards:
     - archive
     - magazine
 
-users:
+members:
   # 확장 변수 -- 핸드폰 번호, 상세 주소
-  extra_vars:
+  extraVars:
   - handphone
   - home_address
 
 destination:
   build: ./build
-  site_code: S20220207c3651e5414a9f
+  siteCode: S20220207c3651e5414a9f
