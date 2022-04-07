@@ -1,4 +1,6 @@
 source:
+  adapter: xe1
+  webroot: /campaignus/npcn/backup/www/
   db:
     type: mysql
     host: 10.148.130.62
@@ -6,8 +8,57 @@ source:
     user: vagrant
     password: vagrant
     dateStrings: true
-  adapter: xe1
-  webroot: /campaignus/npcn/backup/www/
+
+images:
+  prefix:
+  - '\./'
+  - 'http://www.npcn.or.kr/'
+  - 'http://npcn.or.kr/'
+  patterns:
+  - search: [\W_]
+    replace: 
+
+# key 캠페이너스 게시판 => {{ label }}.xlsx
+# value: 소스 게시판 src.xe_modules.mid
+boards:
+  budgets:
+    label: 재정보고
+    src:
+    - budget
+  notices:
+    label: 공지사항
+    src:
+    - notice
+  activities:
+    label: 활동소식 
+    src:
+    - work
+    - together
+    - midea
+  press:
+    label: 성명보도자료 
+    src:
+    - statement
+  campaigns:
+    label: 캠페인 
+    src:
+    - member
+    - gathering
+    - nationalpark
+    - hanbaek
+  archives:
+    label: 자료실 
+    src:
+    - papers
+    - archive
+    - magazine
+
+users:
+  # 확장 변수 -- 핸드폰 번호, 상세 주소
+  extra_vars:
+  - handphone
+  - home_address
+
 
 destination:
   build: ./build

@@ -8,8 +8,7 @@ const HTMLParser = require('node-html-parser');
 const path = require('path');
 const http = require('follow-redirects').http;
 const https = require('follow-redirects').https;
-const { transliterate, slugify } = require('transliteration');
-var MD5 = require("crypto-js/md5");
+const MD5 = require("crypto-js/md5");
 
 // 설정
 let { config, columns, boards, images } = getConfig();

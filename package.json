@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "description": "migration to campainus",
   "main": "bin/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "bin": { "migrate2cpn": "./bin/index.js" },
   "author": "yeongtaek, Hong<mozodev@users.noreply.github.com>",
   "license": "MIT",
   "dependencies": {
@@ -15,10 +13,6 @@
     "follow-redirects": "^1.14.9",
     "js-yaml": "^4.1.0",
     "mysql": "^2.18",
-    "node-html-parser": "^5.3.3",
-    "transliteration": "^2.2.0"
-  },
-  "bin": {
-    "migrate-to-cpus": "./bin/index.js"
+    "node-html-parser": "^5.3.3"
   }
 }
