@@ -59,7 +59,6 @@ users:
   - handphone
   - home_address
 
-
 destination:
   build: ./build
   site_code: S20220207c3651e5414a9f
