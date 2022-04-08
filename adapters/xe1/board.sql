@@ -9,7 +9,7 @@ SELECT<% if (locals.categories) { %>
     '' AS "카테고리ID",<% } %>
     SUBSTRING(d.`title`, 1, 100) AS "제목", 
     d.`content` AS "내용(HTML)",
-    d.`user_name` AS "작성자",
+    IF(d.`user_name` = '', '<%= locals.defaultUserName %>', d.`user_name`) AS "작성자",
     STR_TO_DATE(d.`regdate`, '%Y%m%d%H%i%s') AS "작성시간",
     d.`readed_count` AS "조회수",
     d.`voted_count` AS "좋아요수",
@@ -21,4 +21,5 @@ FROM
     LEFT OUTER JOIN `xe_modules` m ON d.module_srl = m.module_srl
 WHERE
     m.mid IN (<%- mids %>)
+    AND d.`status` IN ('PUBLIC', 'SECRET')
 ORDER BY d.`regdate` DESC
