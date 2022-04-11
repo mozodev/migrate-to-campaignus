@@ -1,0 +1,32 @@
+-- members.sql 회원
+SELECT
+    u.`user_email` AS "E-mail",
+    u.`user_login` AS "ID",
+    '1234567890' AS "비밀번호",
+    '관리자' AS "회원그룹",
+    '' AS "쇼핑등급",
+    '' AS "가입유형 ID",
+    u.`display_name` AS "이름",
+    '' AS "성별",
+    '' AS "연락처",
+    u.`user_url` AS "홈페이지",
+    '' AS "우편번호",
+    '' AS "주소",
+    '' AS "상세주소",
+    '' AS "생년월일",
+    '' AS "상호",
+    '' AS "사업자번호",
+    '' AS "대표자명",
+    '' AS "사업자 연락처",
+    '' AS "종목",
+    '' AS "사업장 우편번호",
+    '' AS "사업장 주소",
+    '' AS "사업장 상세주소",
+    '' AS "담당자명",
+    '' AS "적립금",
+    '' AS "Google ID",
+    '' AS "Facebook ID",
+    '' AS "Kakao ID",
+    '' AS "Naver ID"
+FROM
+    wp_users u
