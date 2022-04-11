@@ -16,6 +16,10 @@
     "follow-redirects": "^1.14.9",
     "js-yaml": "^4.1.0",
     "mysql": "^2.18",
-    "node-html-parser": "^5.3.3"
+    "node-html-parser": "^5.3.3",
+    "turndown": "^7.1.1"
+  },
+  "devDependencies": {
+    "standard": "^16.0.4"
   }
 }

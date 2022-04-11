@@ -16,9 +16,6 @@ images:
   - 'http://www.npcn.or.kr/'
   - 'http://npcn.or.kr/'
 
-# key 캠페이너스 게시판 => {{ label }}.xlsx
-# value: 소스 게시판 src.xe_modules.mid
-# defaultUserName: 국시모
 boards:
   defaultUserName: 국시모
   mappings:
@@ -31,24 +28,24 @@ boards:
       src:
       - notice
     activities:
-      label: 활동소식 
+      label: 활동소식
       src:
       - work
       - together
       - midea
     press:
-      label: 성명보도자료 
+      label: 성명보도자료
       src:
       - statement
     campaigns:
-      label: 캠페인 
+      label: 캠페인
       src:
       - member
       - gathering
       - nationalpark
       - hanbaek
     archives:
-      label: 자료실 
+      label: 자료실
       src:
       - papers
       - archive
@@ -62,3 +59,4 @@ members:
 destination:
   build: ./build
   siteCode: S20220207c3651e5414a9f
+  output: xlsx
