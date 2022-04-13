@@ -11,6 +11,8 @@ const http = require('follow-redirects').http
 const https = require('follow-redirects').https
 const MD5 = require('crypto-js/md5')
 const { Command } = require('commander')
+const sanitizeHtml = require('sanitize-html')
+const tidy = require('htmltidy2').tidy
 
 // 설정
 const appRoot = dirname(dirname(require.main.filename))
@@ -142,7 +144,7 @@ function processContentURL (str) {
                 filename = `${MD5(src)}.${ext}`
                 filename = filename.toLowerCase()
               }
-              res.pipe(fs.createWriteStream(`${targetDir}/${filename}`))
+              // res.pipe(fs.createWriteStream(`${targetDir}/${filename}`))
             } else {
               filename = ''
             }
@@ -151,14 +153,14 @@ function processContentURL (str) {
           // 내부인 경우 파일 찾아서 복사한다.
           filename = fixFilename(src)
           search = fixPath(src)
-          if (filename) copyImageFiles(search, `${targetDir}/${filename}`)
+          // if (filename) copyImageFiles(search, `${targetDir}/${filename}`)
         }
       } catch (e) {
         // URL이 아닌 경우
         if (check && check.includes('files/attach/images/')) {
           filename = fixFilename(src)
           search = fixPath(src)
-          copyImageFiles(search, `${targetDir}/${filename}`)
+          // copyImageFiles(search, `${targetDir}/${filename}`)
         } else {
           console.error('무시', search, e.toString())
         }
@@ -170,16 +172,23 @@ function processContentURL (str) {
       }
     })
   }
-  // 주석 제거
-  replaced = replaced.replace(/<!--.*?-->/g, '')
   // 엑셀 셀 문자열 수 제한 넘는 경우 불필요한 문자열(xlsx 복붙 등) 제거
   // https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3?ui=en-us&rs=en-us&ad=us#ID0EBABAAA=Excel_2016-2013
   // Total number of characters that a cell can contain 32,767 characters
   if (replaced.length > 32767) {
-    replaced = replaced.replace(/(<[^>]+) style=".*?"/ig, '$1')
-    replaced = replaced.replace(/(<[^>]+) valign=".*?"/ig, '$1')
-    replaced = replaced.replace(/(<[^>]+) class=".*?"/ig, '$1')
-    replaced = replaced.replace(/(<[^>]+) lang=".*?"/ig, '$1')
+    try {
+      replaced = sanitizeHtml(replaced, {
+        allowedTags: sanitizeHtml.defaults.allowedTags
+          .concat(['img'])
+          .filter(item => !['html', 'head', 'title', 'body', 'span'].includes(item))
+      })
+      tidy(replaced, { doctype: '', hideComments: true }, function (err, html) {
+        console.error(err)
+        replaced = html
+      })
+    } catch (err) {
+      console.error(err)
+    }
   }
   return replaced
 }

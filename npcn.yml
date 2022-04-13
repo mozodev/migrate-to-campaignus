@@ -1,10 +1,9 @@
 source:
   adapter: xe1
-  mount: "rclone mount npcn: /campaignus/npcn --daemon"
   webRoot: /campaignus/www/
   db:
     type: mysql
-    host: 10.148.130.62
+    host: 10.148.130.184
     database: npcn
     user: vagrant
     password: vagrant
