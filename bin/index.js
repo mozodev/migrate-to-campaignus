@@ -17,10 +17,11 @@ const tidy = require('htmltidy2').tidy
 // 설정
 const appRoot = dirname(dirname(require.main.filename))
 const adapters = ['campaignus', 'xe1', 'wp']
-const outputs = ['xlsx', 'sql', 'json', 'csv', 'html', 'markdown', 'text']
+const outputs = ['xlsx', 'sql', 'json', 'csv', 'html', 'md', 'txt', 'gsheet']
 
 // ${migration}.yml 파일을 읽어서 마이그레이션 설정을 반환합니다.
 let migrationConfig = ''
+let migrationOptions = {}
 const program = new Command()
 program
   .name('migrate2campaignus')
@@ -28,20 +29,32 @@ program
   .version('0.1.0')
   .argument('<migration>', 'migration.yml')
   .option('-d, --debug', 'output extra debugging')
-  .option('-o, --output', `output format: ${outputs}, adapters: ${adapters}`, 'excel')
-  .action(migration => {
+  .option('-I, --no-images', 'without images')
+  .action((migration, options) => {
     migrationConfig = getMigrationConfig(migration)
+    migrationOptions = options
     if (Object.keys(migrationConfig).length === 0 && migrationConfig.constructor === Object) {
       console.error('migration config not found or invalid.')
       exit(-1)
     }
+    if (!('images' in options && options.images)) {
+      console.log('migration without images...')
+    }
+    if ('debug' in options && options.debug) {
+      console.log('debug mode on!')
+      console.log('adapters:', adapters)
+      console.log('outputs:', outputs)
+      console.log('migration:', migration)
+      console.log('options:', options)
+    }
+    console.log(`${migrationConfig.buildPath}/output.log`)
+    console.log(`${migrationConfig.buildPath}/error.log`)
   })
   .parse()
 
 const { source, images, boards, members, destination } = migrationConfig
 const webRoot = source.webRoot
 const siteCode = destination.siteCode
-const buildPath = `${destination.build}/${Date.now()}`
 
 /**
  * 요청한 어뎁터 설정을 반환한다.
@@ -72,21 +85,31 @@ function getMigrationConfig (filename) {
   const filePath = `${process.cwd()}/${filename}.yml`
   if (fs.existsSync(filePath)) {
     config = yaml.load(fs.readFileSync(filePath, 'utf8'))
+    if (config) {
+      const now = new Date(Date.now())
+      const nowDate = new Date().toISOString().substring(0, 10).replace(/-/g, '')
+      const nowTime = now.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' }).replace(/:/g, '')
+      config.buildPath = `${config.destination.build}/${config.id}/${nowDate}-${nowTime}`
+    }
   }
   return config
 }
 
 // 표준 출력, 에러를 파일에 기록한다.
-if (!fs.existsSync(`${buildPath}/${siteCode}`)) {
-  fs.mkdirSync(`${buildPath}/${siteCode}`, { recursive: true })
-  fs.writeFile(`${buildPath}/output.log`, '', _err => console.error)
-  fs.writeFile(`${buildPath}/error.log`, '', _err => console.error)
+if (!fs.existsSync(`${migrationConfig.buildPath}/${siteCode}`)) {
+  fs.mkdirSync(`${migrationConfig.buildPath}/${siteCode}`, { recursive: true })
+  fs.writeFile(`${migrationConfig.buildPath}/output.log`, '', err => {
+    if (err) { console.error(err) }
+  })
+  fs.writeFile(`${migrationConfig.buildPath}/error.log`, '', err => {
+    if (err) { console.error(err) }
+  })
 }
-process.stdout.write = function (str, _encoding, _fg) {
-  fs.appendFile(`${buildPath}/output.log`, str)
+process.stdout.write = function (str, encoding, fg) {
+  fs.appendFile(`${migrationConfig.buildPath}/output.log`, str, err => { if (err) console.error(err) })
 }
-process.stderr.write = function (str, _encoding, _fg) {
-  fs.appendFile(`${buildPath}/error.log`, str)
+process.stderr.write = function (str, encoding, fg) {
+  fs.appendFile(`${migrationConfig.buildPath}/error.log`, str, err => { if (err) console.error(err) })
 }
 
 /**
@@ -109,13 +132,13 @@ function getQuery (adapter, name, data = {}) {
  * 포스트 본문 문자열 처리
  * - 본문 내 URL 추출, 파일명 치환, 빌드 디렉토리로 파일 복사
  * - 내부의 경우 파일시스템 복사, 외부의 경우 다운로드
- * - 엑셀 문자열 길이 제한(32767)에 걸릴 시 불필요한 문자열 제거
- * @param string str (본문 원본 문자열)
- * @returns string replaced (치환한 문자열)
+ * - 불필요한 문자열 제거 -- 엑셀 문자열 길이 제한(32767)
+ * @param string str 본문 원본 문자열
+ * @returns string replaced 치환한 문자열
  */
-function processContentURL (str) {
+function processContentURL (str, label, title) {
   const targetPrefix = `https://cdn.imweb.me/upload/${siteCode}`
-  const targetDir = `${buildPath}/${siteCode}`
+  const targetDir = `${migrationConfig.buildPath}/${siteCode}`
   const doc = HTMLParser.valid(str) ? HTMLParser.parse(str) : ''
   let replaced = str
   const imgs = doc ? doc.getElementsByTagName('img') : []
@@ -144,7 +167,10 @@ function processContentURL (str) {
                 filename = `${MD5(src)}.${ext}`
                 filename = filename.toLowerCase()
               }
-              // res.pipe(fs.createWriteStream(`${targetDir}/${filename}`))
+              // --no-image
+              if ('images' in migrationOptions && migrationOptions.images) {
+                res.pipe(fs.createWriteStream(`${targetDir}/${filename}`))
+              }
             } else {
               filename = ''
             }
@@ -153,16 +179,22 @@ function processContentURL (str) {
           // 내부인 경우 파일 찾아서 복사한다.
           filename = fixFilename(src)
           search = fixPath(src)
-          // if (filename) copyImageFiles(search, `${targetDir}/${filename}`)
+          // --no-image
+          if ('images' in migrationOptions && migrationOptions.images) {
+            if (filename) copyImageFiles(search, `${targetDir}/${filename}`)
+          }
         }
       } catch (e) {
         // URL이 아닌 경우
         if (check && check.includes('files/attach/images/')) {
           filename = fixFilename(src)
           search = fixPath(src)
-          // copyImageFiles(search, `${targetDir}/${filename}`)
+          // --no-image
+          if ('images' in migrationOptions && migrationOptions.images) {
+            copyImageFiles(search, `${targetDir}/${filename}`)
+          }
         } else {
-          console.error('무시', search, e.toString())
+          console.error('[무시]', label, '|', title, '|', check, '|' , e.toString())
         }
       } finally {
         // 본문 이미지 경로 치환
@@ -172,32 +204,32 @@ function processContentURL (str) {
       }
     })
   }
-  // 엑셀 셀 문자열 수 제한 넘는 경우 불필요한 문자열(xlsx 복붙 등) 제거
+  // tidyHtml && sanitizeHtml -- 엑셀 문자열 길이 제한(32767)
   // https://support.microsoft.com/en-us/office/excel-specifications-and-limits-1672b34d-7043-467e-8e27-269d656771c3?ui=en-us&rs=en-us&ad=us#ID0EBABAAA=Excel_2016-2013
-  // Total number of characters that a cell can contain 32,767 characters
-  if (replaced.length > 32767) {
-    try {
-      replaced = sanitizeHtml(replaced, {
-        allowedTags: sanitizeHtml.defaults.allowedTags
-          .concat(['img'])
-          .filter(item => !['html', 'head', 'title', 'body', 'span'].includes(item))
-      })
-      tidy(replaced, { doctype: '', hideComments: true }, function (err, html) {
-        console.error(err)
-        replaced = html
-      })
-    } catch (err) {
-      console.error(err)
-    }
+  try {
+    tidy(replaced, { doctype: '', hideComments: true }, function (err, html) {
+      if (err) console.error(err)
+      replaced = html
+    })
+    replaced = sanitizeHtml(replaced, {
+      allowedTags: sanitizeHtml.defaults.allowedTags
+        .concat(['img'])
+        .filter(item => !['html', 'head', 'title', 'body', 'span'].includes(item))
+    })
+  } catch (err) {
+    console.error(err)
   }
+
   return replaced
 }
 
 // 이미지 파일들은 여러 개의 폴더가 아닌, 한 개의 폴더에 담아 폴더를 **압축**하여 전달주셔야합니다.
 function copyImageFiles (src, dst) {
   fs.copyFile(src, dst, (err) => {
-    if (err) console.error(err)
-    // console.log(`${src} ===> ${dst}`)
+    if (err) throw console.error(err)
+    if ('debug' in migrationOptions && migrationOptions.debug) {
+      console.log(`${src} ===> ${dst}`)
+    }
   })
 }
 
@@ -218,7 +250,9 @@ function fixFilename (src) {
   if (!/^[x00-x7F]*$/.test(filename) || specialChars.test(filename)) {
     // 한글이나 특수문자있는 경우 md5 hash.
     filename = `${MD5(src)}.${ext}`
-    // console.log(src, filename)
+    if ('debug' in migrationOptions && migrationOptions.debug) {
+      console.log(src, filename)
+    }
   }
   // ..jpg => .jpg
   filename = filename.replace('..', '.')
@@ -232,10 +266,12 @@ function fixFilename (src) {
 function copyFromTemplate (model, label) {
   if (!['board', 'member'].includes(model)) return ''
   const src = `${appRoot}/adapters/campaignus/templates/${model}.xlsx`
-  const dst = `${buildPath}/${label}.xlsx`
+  const dst = `${migrationConfig.buildPath}/${label}.xlsx`
   fs.copyFile(src, dst, (err) => {
-    if (err) throw err
-    console.log(`${src} was copied to ${dst}`)
+    if (err) console.error(err)
+    if ('debug' in migrationOptions && migrationOptions.debug) {
+      console.log(`${src} was copied to ${dst}`)
+    }
   })
   return dst
 }
@@ -294,15 +330,20 @@ db.connect(err => {
         data.defaultUserName = boards.defaultUserName
       }
       db.query(getQuery('xe1', 'board', data), (err, results) => {
-        if (err) console.log(err) && exit()
+        if (err) console.log(err) && exit(-1)
         const label = boards.mappings[board].label
         // 빌드 패스에 템플릿 파일을 label.xlsx 복사.
         const dstExcel = copyFromTemplate('board', label)
-        const posts = JSON.parse(JSON.stringify(results))
-        posts.map((post) => {
-          post['내용(HTML)'] = processContentURL(post['내용(HTML)'])
-          return post['내용(HTML)']
-        })
+        let posts = {}
+        try {
+          posts = JSON.parse(JSON.stringify(results))
+          posts.map((post) => {
+            post['내용(HTML)'] = processContentURL(post['내용(HTML)'], label, post['제목'])
+            return post['내용(HTML)']
+          })
+        } catch (e) {
+          console.error(label, e, results)
+        }
         if (Array.isArray(posts) && posts.length > 0 && data.mids) {
           console.log(`2. 게시판: ${label} (${data.mids}) -- ${posts.length}`)
           const workbook = new excel.Workbook()

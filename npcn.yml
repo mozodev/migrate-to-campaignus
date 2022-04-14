@@ -1,6 +1,9 @@
+id: npcn
+label: 국립공원을지키는시민의모임
+
 source:
   adapter: xe1
-  webRoot: /campaignus/www/
+  webRoot: /home/ubuntu/source/npcn/www
   db:
     type: mysql
     host: 10.148.130.184

@@ -1,0 +1,33 @@
+id: {{ id }}
+label: {{ label }}
+
+source:
+  adapter: {{ adpater }}
+  webRoot: {{ path }}
+  db:
+    type: mysql
+    host: {{ ip }}
+    database: {{ db }}
+    user: {{ user }}
+    password: {{ password }}
+    dateStrings: true
+
+images:
+  prefix:
+  - {{ regex }}
+
+boards:
+  defaultUserName: {{ defaultUserName }}
+  mappings:
+    budgets:
+      label: {{ label }}
+      src:
+      - {{ argsToSqlQuery }}
+
+members:
+  {{ key }}: {{ values }}
+
+destination:
+  build: ./build
+  siteCode: {{ siteCode }}
+  output: {{ outputs }}

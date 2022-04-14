@@ -2,4 +2,6 @@
 /build
 /config/upstream.yml
 /test
-/projects
+/source
+/public
+*.code-workspace
