@@ -7,7 +7,7 @@
 $ cd migrate-to-campainus
 $ yarn
 # write a migration config file project.yml
-$ node . project
+$ node . -h
 ```
 
 ## 이전 데이터 형식
@@ -18,4 +18,7 @@ $ node . project
 ```
 # show unique file extensions
 find . -type f | perl -ne 'print $1 if m/\.([^.\/]+)$/' | sort -u
+
+# get campaignus SITE_CODE
+curl -sSL {{ PROJECT_CODE }}.campaignus.me | grep SITE_CODE
 ```

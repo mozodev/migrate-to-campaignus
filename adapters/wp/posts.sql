@@ -1,40 +1,18 @@
 SELECT
-    *
+    '' AS "카테고리ID",
+    SUBSTRING(p.`post_title`, 1, 100) AS "제목",
+    p.`post_content` AS "내용(HTML)",
+    u.`display_name` AS "작성자",
+    DATE_FORMAT(p.`post_date`, '%Y-%m-%d %H:%i:%s') AS "작성시간",
+    '' AS "조회수",
+    '' AS "좋아요수",
+    'N' AS "공지여부",
+    'N' AS "비밀글",
+    '' AS "비밀번호"
 FROM
-    `wp_posts`
+    `wp_posts` p
+    LEFT OUTER JOIN `wp_users` u ON p.`post_author` = u.`ID`
 WHERE
-    `post_type` = 'sewoon_makers'
-
--- posts images
--- 2021: 8450,8451,8452,8453,8449,8455,8454,8457,8448
--- 2019: 6977,6978,6979,6980,6981,6982,6983,6984,6985,6986
--- 2018: 6987,6988,6989,6990
-SELECT
-    "2020~21" AS `year`,
-    `post_parent`,
-    `post_title`,
-    `guid`
-FROM
-    `wp_posts`
-WHERE
-    `ID` IN (8450,8451,8452,8453,8449,8455,8454,8457,8448)
-UNION
-SELECT
-    "2019" AS `year`,
-    `post_parent`,
-    `post_title`,
-    `guid`
-FROM
-    `wp_posts`
-WHERE
-    `ID` IN (6977,6978,6979,6980,6981,6982,6983,6984,6985,6986)
-UNION
-SELECT
-    "2018" AS `year`,
-    `post_parent`,
-    `post_title`,
-    `guid`
-FROM
-    `wp_posts`
-WHERE
-    `ID` IN (6987,6988,6989,6990)
+    p.`post_status` = 'publish'
+    <% if (locals.postTypes) { %>AND p.`post_type` IN ('<%= postTypes %>')<% } %>
+ORDER BY p.`post_date` DESC

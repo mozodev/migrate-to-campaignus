@@ -8,5 +8,5 @@ FROM
     `wp_term_relationships` tr
     LEFT OUTER JOIN `wp_posts` p ON p.`ID` = tr.`object_id`
 WHERE
-    tr.`term_taxonomy_id` IN (11,12,13)
+    tr.`term_taxonomy_id` IN (11,12)
 ORDER BY p.`post_date` DESC;
